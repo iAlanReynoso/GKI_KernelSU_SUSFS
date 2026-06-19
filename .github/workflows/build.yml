@@ -294,6 +294,23 @@ jobs:
     - name: Initialize Config Fragment
       run: touch "${{ github.workspace }}/wild_gki.fragment"
 
+    - name: Integrate v4l2loopback (Phoenix dual-cam)
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel
+      run: |
+        set -x
+        KSRC=common
+        [ -d "$KSRC/drivers/media" ] || KSRC=$(find . -maxdepth 2 -path '*/drivers/media' -printf '%h\n' 2>/dev/null | head -1)
+        echo "kernel source dir: $KSRC"
+        mkdir -p "$KSRC/drivers/media/v4l2loopback"
+        cp "$GITHUB_WORKSPACE/phoenix_v4l2/"*.c "$GITHUB_WORKSPACE/phoenix_v4l2/"*.h "$KSRC/drivers/media/v4l2loopback/"
+        echo 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback.o' > "$KSRC/drivers/media/v4l2loopback/Makefile"
+        grep -q 'v4l2loopback' "$KSRC/drivers/media/Makefile" || echo 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback/' >> "$KSRC/drivers/media/Makefile"
+        CFG="$KSRC/arch/arm64/configs/gki_defconfig"
+        grep -q CONFIG_V4L2LOOPBACK "$CFG" || echo 'CONFIG_V4L2LOOPBACK=m' >> "$CFG"
+        echo "=== v4l2loopback integrado (=m, in-tree) ==="
+        tail -2 "$KSRC/drivers/media/Makefile"; grep V4L2LOOPBACK "$CFG"
+
     - name: Build Normal Kernel
       env:
         SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
@@ -349,6 +366,26 @@ jobs:
       with:
         bypass: true
         version: ${{ inputs.version }}
+
+    - name: Collect v4l2loopback.ko (Phoenix)
+      if: ${{ always() }}
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel
+      run: |
+        set -x
+        mkdir -p "$GITHUB_WORKSPACE/phoenix_out"
+        find . -name 'v4l2loopback.ko' -exec cp -v {} "$GITHUB_WORKSPACE/phoenix_out/" \; 2>/dev/null || true
+        ls -la "$GITHUB_WORKSPACE/phoenix_out/" || echo "NO v4l2loopback.ko (revisar build log)"
+        for k in "$GITHUB_WORKSPACE/phoenix_out/"*.ko; do [ -f "$k" ] && modinfo "$k" 2>/dev/null | grep -iE 'vermagic|depends|^name' || true; done
+
+    - name: Upload v4l2loopback.ko (Phoenix)
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: phoenix-v4l2loopback-ko
+        path: ${{ github.workspace }}/phoenix_out/**
+        if-no-files-found: warn
+        compression-level: 9
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
