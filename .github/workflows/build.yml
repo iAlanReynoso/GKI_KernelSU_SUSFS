@@ -307,8 +307,9 @@ jobs:
         echo 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback.o' > "$KSRC/drivers/media/v4l2loopback/Makefile"
         grep -q 'v4l2loopback' "$KSRC/drivers/media/Makefile" || echo 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback/' >> "$KSRC/drivers/media/Makefile"
         CFG="$KSRC/arch/arm64/configs/gki_defconfig"
-        grep -q CONFIG_V4L2LOOPBACK "$CFG" || echo 'CONFIG_V4L2LOOPBACK=m' >> "$CFG"
-        echo "=== v4l2loopback integrado (=m, in-tree) ==="
+        sed -i '/CONFIG_V4L2LOOPBACK/d' "$CFG"
+        echo 'CONFIG_V4L2LOOPBACK=y' >> "$CFG"
+        echo "=== v4l2loopback integrado (=y, built-in en el Image) ==="
         tail -2 "$KSRC/drivers/media/Makefile"; grep V4L2LOOPBACK "$CFG"
 
     - name: Build Normal Kernel

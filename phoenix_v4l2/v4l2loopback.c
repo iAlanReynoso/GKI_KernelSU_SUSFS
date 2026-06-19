@@ -205,11 +205,11 @@ MODULE_PARM_DESC(
 	"how many users can open the loopback device [DEFAULT: " __stringify(
 		V4L2LOOPBACK_DEFAULT_MAX_OPENERS) "]");
 
-static int devices = -1;
+static int devices = 2; /* phoenix: dual-cam (back+front) por defecto en built-in */
 module_param(devices, int, 0);
 MODULE_PARM_DESC(devices, "how many devices should be created");
 
-static int video_nr[MAX_DEVICES] = { [0 ...(MAX_DEVICES - 1)] = -1 };
+static int video_nr[MAX_DEVICES] = { 23, 24, [2 ...(MAX_DEVICES - 1)] = -1 };
 module_param_array(video_nr, int, NULL, 0444);
 MODULE_PARM_DESC(video_nr,
 		 "video device numbers (-1=auto, 0=/dev/video0, etc.)");
