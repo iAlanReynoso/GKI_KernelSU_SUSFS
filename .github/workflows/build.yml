@@ -304,7 +304,7 @@ jobs:
         echo "kernel source dir: $KSRC"
         mkdir -p "$KSRC/drivers/media/v4l2loopback"
         cp "$GITHUB_WORKSPACE/phoenix_v4l2/"*.c "$GITHUB_WORKSPACE/phoenix_v4l2/"*.h "$KSRC/drivers/media/v4l2loopback/"
-        echo 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback.o' > "$KSRC/drivers/media/v4l2loopback/Makefile"
+        printf 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback.o\nccflags-y += -Wno-error -Wno-declaration-after-statement -Wno-unused-function -Wno-unused-variable\n' > "$KSRC/drivers/media/v4l2loopback/Makefile"
         # Kconfig del subdir — CRÍTICO: sin esto el símbolo no existe y kbuild descarta el config
         printf 'config V4L2LOOPBACK\n\tbool "V4L2 loopback device (phoenix dual-cam)"\n\tdepends on VIDEO_DEV\n\tdefault y\n\thelp\n\t  Virtual V4L2 capture device for phoenix dual-cam (Cam Link mirror).\n' > "$KSRC/drivers/media/v4l2loopback/Kconfig"
         grep -q 'v4l2loopback' "$KSRC/drivers/media/Makefile" || echo 'obj-$(CONFIG_V4L2LOOPBACK) += v4l2loopback/' >> "$KSRC/drivers/media/Makefile"
